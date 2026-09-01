@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COONARTAX - Trámite Tarjeta de Operación y Pólizas</title>
-    <!-- FontAwesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -264,7 +263,6 @@
             </button>
         </form>
 
-        <!-- Tarjeta de Resultados -->
         <div id="result-card">
             <div class="info-row">
                 <span class="info-label">Asociado:</span>
@@ -275,6 +273,10 @@
                 <span class="info-value" id="res-placa">-</span>
             </div>
             <div class="info-row">
+                <span class="info-label">Número de Orden:</span>
+                <span class="info-value" id="res-orden">-</span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Excedentes 2025:</span>
                 <span class="info-value" id="res-excedentes">$0</span>
             </div>
@@ -283,7 +285,6 @@
                 <span class="info-value" id="res-abonado">$0</span>
             </div>
 
-            <!-- Bloque dinámico para Saldo a Favor o Saldo a Pagar -->
             <div id="status-badge" class="badge-pagar">
                 <div class="badge-title" id="badge-title">SALDO A PAGAR</div>
                 <div class="badge-amount" id="res-saldo">$0</div>
@@ -299,7 +300,6 @@
     </footer>
 
     <script>
-        // URL vinculada a tu Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKc6KkJMnm0kAnD-el8dppANNQuxNzIr3NPv-gUtysSPmWiKvGKW4JfOOMb_DxqZc/exec";
 
         function formatMoney(amount) {
@@ -313,7 +313,53 @@
             }).format(amount);
         }
 
-        document.getElementById('search-form').addEventListener('submit', async function(e) {
+        window.procesarRespuesta = function(data) {
+            const errorBox = document.getElementById('error-box');
+            const resultCard = document.getElementById('result-card');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
+            btnSubmit.disabled = false;
+
+            const scriptPrevio = document.getElementById('jsonp-script');
+            if (scriptPrevio) scriptPrevio.remove();
+
+            if (!data || !data.encontrado) {
+                errorBox.innerText = "Placa o Cédula incorrecta. Por favor verifique sus datos.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('res-nombre').innerText = data.nombre || '-';
+            document.getElementById('res-placa').innerText = data.placa || '-';
+            document.getElementById('res-orden').innerText = data.numeroOrden || '-';
+            document.getElementById('res-excedentes').innerText = formatMoney(data.excedentes2025);
+            document.getElementById('res-abonado').innerText = formatMoney(data.totalAbonado);
+
+            const statusBadge = document.getElementById('status-badge');
+            const badgeTitle = document.getElementById('badge-title');
+            const resSaldo = document.getElementById('res-saldo');
+
+            let saldoNum = parseFloat(data.saldo.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+            if (saldoNum < 0) {
+                statusBadge.className = 'badge-favor';
+                badgeTitle.innerText = 'SALDO A FAVOR DEL ASOCIADO';
+                resSaldo.innerText = formatMoney(Math.abs(saldoNum));
+            } else if (saldoNum === 0) {
+                statusBadge.className = 'badge-favor';
+                badgeTitle.innerText = 'ESTADO DE CUENTA';
+                resSaldo.innerText = 'AL DÍA ($0)';
+            } else {
+                statusBadge.className = 'badge-pagar';
+                badgeTitle.innerText = 'SALDO A PAGAR';
+                resSaldo.innerText = formatMoney(saldoNum);
+            }
+
+            resultCard.style.display = 'block';
+        };
+
+        document.getElementById('search-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const placa = document.getElementById('placa').value.trim().toUpperCase();
@@ -327,55 +373,14 @@
             btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando...';
             btnSubmit.disabled = true;
 
-            try {
-                const response = await fetch(`${WEB_APP_URL}?placa=${encodeURIComponent(placa)}&cedula=${encodeURIComponent(cedula)}`);
-                const data = await response.json();
+            const scriptOld = document.getElementById('jsonp-script');
+            if (scriptOld) scriptOld.remove();
 
+            const script = document.createElement('script');
+            script.id = 'jsonp-script';
+            script.src = `${WEB_APP_URL}?placa=${encodeURIComponent(placa)}&cedula=${encodeURIComponent(cedula)}&callback=procesarRespuesta`;
+            
+            script.onerror = function() {
                 btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
                 btnSubmit.disabled = false;
-
-                if (!data || !data.encontrado) {
-                    errorBox.style.display = 'block';
-                    return;
-                }
-
-                // Asignar datos
-                document.getElementById('res-nombre').innerText = data.nombre;
-                document.getElementById('res-placa').innerText = data.placa;
-                document.getElementById('res-excedentes').innerText = formatMoney(data.excedentes2025);
-                document.getElementById('res-abonado').innerText = formatMoney(data.totalAbonado);
-
-                const statusBadge = document.getElementById('status-badge');
-                const badgeTitle = document.getElementById('badge-title');
-                const resSaldo = document.getElementById('res-saldo');
-
-                let saldoNum = parseFloat(data.saldo.toString().replace(/[^0-9.-]+/g, "")) || 0;
-
-                // Saldo a Favor vs Saldo a Pagar
-                if (saldoNum < 0) {
-                    const saldoFavor = Math.abs(saldoNum);
-                    statusBadge.className = 'badge-favor';
-                    badgeTitle.innerText = 'SALDO A FAVOR DEL ASOCIADO';
-                    resSaldo.innerText = formatMoney(saldoFavor);
-                } else if (saldoNum === 0) {
-                    statusBadge.className = 'badge-favor';
-                    badgeTitle.innerText = 'ESTADO DE CUENTA';
-                    resSaldo.innerText = 'AL DÍA ($0)';
-                } else {
-                    statusBadge.className = 'badge-pagar';
-                    badgeTitle.innerText = 'SALDO A PAGAR';
-                    resSaldo.innerText = formatMoney(saldoNum);
-                }
-
-                resultCard.style.display = 'block';
-
-            } catch (err) {
-                btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
-                btnSubmit.disabled = false;
-                errorBox.innerText = "Error al conectar con la base de datos. Por favor reintente.";
-                errorBox.style.display = 'block';
-            }
-        });
-    </script>
-</body>
-</html>
+                errorBox.innerText =
