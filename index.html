@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COONARTAX - Trámite Tarjeta de Operación y Pólizas</title>
+    <!-- FontAwesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --yellow-taxi: #FFC800;
+            --yellow-dark: #E6B200;
+            --black-taxi: #1A1A1A;
+            --gray-bg: #F4F6F8;
+            --white: #FFFFFF;
+            --green-positive: #2E7D32;
+            --red-negative: #C62828;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            color: var(--black-taxi);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--black-taxi);
+            border-bottom: 5px solid var(--yellow-taxi);
+            color: var(--white);
+            text-align: center;
+            padding: 25px 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--yellow-taxi);
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: #CCC;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 90%;
+            margin: 30px auto;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #E0E0E0;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 2px solid #DDD;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--yellow-dark);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--yellow-taxi);
+            color: var(--black-taxi);
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--yellow-dark);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        #result-card {
+            display: none;
+            margin-top: 25px;
+            border-top: 2px dashed #DDD;
+            padding-top: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .badge-favor {
+            background-color: #E8F5E9;
+            color: var(--green-positive);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #A5D6A7;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .badge-pagar {
+            background-color: #FFEBEE;
+            color: var(--red-negative);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #EF9A9A;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .badge-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .badge-amount {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .error-msg {
+            display: none;
+            background-color: #FFEBEE;
+            color: var(--red-negative);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        footer {
+            margin-top: auto;
+            background-color: var(--black-taxi);
+            color: var(--white);
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85rem;
+        }
+
+        .btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: #25D366;
+            color: white;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn-whatsapp:hover {
+            background-color: #1DA851;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <i class="fa-solid fa-taxi" style="font-size: 2rem; color: var(--yellow-taxi); margin-bottom: 8px;"></i>
+        <h1>TRAMITE TARJETA DE OPERACION Y POLIZAS COONARTAX 2026 2027</h1>
+        <p>Consulta de estados de cuenta de asociados</p>
+    </header>
+
+    <div class="container">
+        <div id="error-box" class="error-msg">
+            <i class="fa-solid fa-triangle-exclamation"></i> Placa o Cédula incorrecta. Por favor verifique sus datos.
+        </div>
+
+        <form id="search-form">
+            <div class="form-group">
+                <label for="placa"><i class="fa-solid fa-car"></i> Placa del Vehículo</label>
+                <div class="input-icon">
+                    <i class="fa-solid fa-id-card-clip"></i>
+                    <input type="text" id="placa" placeholder="Ej: SLF784" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cedula"><i class="fa-solid fa-lock"></i> Contraseña (Cédula Propietario)</label>
+                <div class="input-icon">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="cedula" placeholder="Número de cédula" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btn-submit">
+                <i class="fa-solid fa-magnifying-glass"></i> Consultar Estado
+            </button>
+        </form>
+
+        <!-- Tarjeta de Resultados -->
+        <div id="result-card">
+            <div class="info-row">
+                <span class="info-label">Asociado:</span>
+                <span class="info-value" id="res-nombre">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Placa:</span>
+                <span class="info-value" id="res-placa">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Excedentes 2025:</span>
+                <span class="info-value" id="res-excedentes">$0</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Abonado:</span>
+                <span class="info-value" id="res-abonado">$0</span>
+            </div>
+
+            <!-- Bloque dinámico para Saldo a Favor o Saldo a Pagar -->
+            <div id="status-badge" class="badge-pagar">
+                <div class="badge-title" id="badge-title">SALDO A PAGAR</div>
+                <div class="badge-amount" id="res-saldo">$0</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>¿Tienes alguna duda o reclamo?</p>
+        <a href="https://wa.me/573215999097?text=Hola,%20tengo%20una%20consulta%20sobre%20el%20tramite%20de%20tarjeta%20de%20operacion%20y%20polizas" class="btn-whatsapp" target="_blank">
+            <i class="fa-brands fa-whatsapp"></i> Contactar al Tesorero (321 599 9097)
+        </a>
+    </footer>
+
+    <script>
+        // URL vinculada a tu Google Apps Script
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKc6KkJMnm0kAnD-el8dppANNQuxNzIr3NPv-gUtysSPmWiKvGKW4JfOOMb_DxqZc/exec";
+
+        function formatMoney(amount) {
+            if (typeof amount === 'string') {
+                amount = parseFloat(amount.replace(/[^0-9.-]+/g, "")) || 0;
+            }
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        document.getElementById('search-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const placa = document.getElementById('placa').value.trim().toUpperCase();
+            const cedula = document.getElementById('cedula').value.trim();
+            const errorBox = document.getElementById('error-box');
+            const resultCard = document.getElementById('result-card');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            errorBox.style.display = 'none';
+            resultCard.style.display = 'none';
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando...';
+            btnSubmit.disabled = true;
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}?placa=${encodeURIComponent(placa)}&cedula=${encodeURIComponent(cedula)}`);
+                const data = await response.json();
+
+                btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
+                btnSubmit.disabled = false;
+
+                if (!data || !data.encontrado) {
+                    errorBox.style.display = 'block';
+                    return;
+                }
+
+                // Asignar datos
+                document.getElementById('res-nombre').innerText = data.nombre;
+                document.getElementById('res-placa').innerText = data.placa;
+                document.getElementById('res-excedentes').innerText = formatMoney(data.excedentes2025);
+                document.getElementById('res-abonado').innerText = formatMoney(data.totalAbonado);
+
+                const statusBadge = document.getElementById('status-badge');
+                const badgeTitle = document.getElementById('badge-title');
+                const resSaldo = document.getElementById('res-saldo');
+
+                let saldoNum = parseFloat(data.saldo.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+                // Saldo a Favor vs Saldo a Pagar
+                if (saldoNum < 0) {
+                    const saldoFavor = Math.abs(saldoNum);
+                    statusBadge.className = 'badge-favor';
+                    badgeTitle.innerText = 'SALDO A FAVOR DEL ASOCIADO';
+                    resSaldo.innerText = formatMoney(saldoFavor);
+                } else if (saldoNum === 0) {
+                    statusBadge.className = 'badge-favor';
+                    badgeTitle.innerText = 'ESTADO DE CUENTA';
+                    resSaldo.innerText = 'AL DÍA ($0)';
+                } else {
+                    statusBadge.className = 'badge-pagar';
+                    badgeTitle.innerText = 'SALDO A PAGAR';
+                    resSaldo.innerText = formatMoney(saldoNum);
+                }
+
+                resultCard.style.display = 'block';
+
+            } catch (err) {
+                btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
+                btnSubmit.disabled = false;
+                errorBox.innerText = "Error al conectar con la base de datos. Por favor reintente.";
+                errorBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
