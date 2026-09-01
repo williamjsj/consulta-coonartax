@@ -300,12 +300,22 @@
     </footer>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKc6KkJMnm0kAnD-el8dppANNQuxNzIr3NPv-gUtysSPmWiKvGKW4JfOOMb_DxqZc/exec";
+        // BASE DE DATOS LOCAL INTEGRADA
+        // Puedes agregar o editar los registros directamente en este listado:
+        const baseDeDatos = [
+            { cedula: "30705333", nombre: "CHICAIZA CHICA", placa: "SLF784", orden: "1", excedentes: 0, abonado: 0, saldo: 712500 },
+            { cedula: "12980226", nombre: "MORAN ERASO I", placa: "SVR876", orden: "2", excedentes: 0, abonado: 0, saldo: 616300 },
+            { cedula: "12988440", nombre: "OBANDO YAÑEZ", placa: "SDP002", orden: "3", excedentes: 0, abonado: 0, saldo: 616300 },
+            { cedula: "1131084084", nombre: "DELGADO NARV", placa: "SVR205", orden: "4", excedentes: 0, abonado: 200000, saldo: 512500 },
+            { cedula: "27072130", nombre: "CABRERA DE RAI", placa: "SJP520", orden: "5", excedentes: 14395, abonado: 200000, saldo: 498105 },
+            { cedula: "1089846165", nombre: "TORO RODRIGUI", placa: "SLF558", orden: "6", excedentes: 36435, abonado: 200000, saldo: 476065 },
+            { cedula: "12979436", nombre: "MADROÑERO IB", placa: "SLE253", orden: "7", excedentes: 40208, abonado: 200000, saldo: 472292 },
+            { cedula: "1085269337", nombre: "CASTRO PAZOS E", placa: "SVQ656", orden: "8", excedentes: 51870, abonado: 200000, saldo: 460630 },
+            { cedula: "27068413", nombre: "ESCOBAR DE NA", placa: "SDP088", orden: "9", excedentes: 72165, abonado: 200000, saldo: 440335 },
+            { cedula: "87247590", nombre: "ALVEAR REBOLLI", placa: "SVS121", orden: "10", excedentes: 110610, abonado: 200000, saldo: 401890 }
+        ];
 
         function formatMoney(amount) {
-            if (typeof amount === 'string') {
-                amount = parseFloat(amount.replace(/[^0-9.-]+/g, "")) || 0;
-            }
             return new Intl.NumberFormat('es-CO', {
                 style: 'currency',
                 currency: 'COP',
@@ -313,34 +323,40 @@
             }).format(amount);
         }
 
-        window.procesarRespuesta = function(data) {
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const placa = document.getElementById('placa').value.trim().toUpperCase();
+            const cedula = document.getElementById('cedula').value.trim();
             const errorBox = document.getElementById('error-box');
             const resultCard = document.getElementById('result-card');
-            const btnSubmit = document.getElementById('btn-submit');
 
-            btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
-            btnSubmit.disabled = false;
+            errorBox.style.display = 'none';
+            resultCard.style.display = 'none';
 
-            const scriptPrevio = document.getElementById('jsonp-script');
-            if (scriptPrevio) scriptPrevio.remove();
+            // Búsqueda en la lista local
+            const asociado = baseDeDatos.find(item => 
+                item.placa.toUpperCase() === placa && item.cedula === cedula
+            );
 
-            if (!data || !data.encontrado) {
+            if (!asociado) {
                 errorBox.innerText = "Placa o Cédula incorrecta. Por favor verifique sus datos.";
                 errorBox.style.display = 'block';
                 return;
             }
 
-            document.getElementById('res-nombre').innerText = data.nombre || '-';
-            document.getElementById('res-placa').innerText = data.placa || '-';
-            document.getElementById('res-orden').innerText = data.numeroOrden || '-';
-            document.getElementById('res-excedentes').innerText = formatMoney(data.excedentes2025);
-            document.getElementById('res-abonado').innerText = formatMoney(data.totalAbonado);
+            // Llenar información
+            document.getElementById('res-nombre').innerText = asociado.nombre || '-';
+            document.getElementById('res-placa').innerText = asociado.placa || '-';
+            document.getElementById('res-orden').innerText = asociado.orden || '-';
+            document.getElementById('res-excedentes').innerText = formatMoney(asociado.excedentes);
+            document.getElementById('res-abonado').innerText = formatMoney(asociado.abonado);
 
             const statusBadge = document.getElementById('status-badge');
             const badgeTitle = document.getElementById('badge-title');
             const resSaldo = document.getElementById('res-saldo');
 
-            let saldoNum = parseFloat(data.saldo.toString().replace(/[^0-9.-]+/g, "")) || 0;
+            let saldoNum = asociado.saldo;
 
             if (saldoNum < 0) {
                 statusBadge.className = 'badge-favor';
@@ -357,30 +373,7 @@
             }
 
             resultCard.style.display = 'block';
-        };
-
-        document.getElementById('search-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const placa = document.getElementById('placa').value.trim().toUpperCase();
-            const cedula = document.getElementById('cedula').value.trim();
-            const errorBox = document.getElementById('error-box');
-            const resultCard = document.getElementById('result-card');
-            const btnSubmit = document.getElementById('btn-submit');
-
-            errorBox.style.display = 'none';
-            resultCard.style.display = 'none';
-            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando...';
-            btnSubmit.disabled = true;
-
-            const scriptOld = document.getElementById('jsonp-script');
-            if (scriptOld) scriptOld.remove();
-
-            const script = document.createElement('script');
-            script.id = 'jsonp-script';
-            script.src = `${WEB_APP_URL}?placa=${encodeURIComponent(placa)}&cedula=${encodeURIComponent(cedula)}&callback=procesarRespuesta`;
-            
-            script.onerror = function() {
-                btnSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Consultar Estado';
-                btnSubmit.disabled = false;
-                errorBox.innerText =
+        });
+    </script>
+</body>
+</html>
